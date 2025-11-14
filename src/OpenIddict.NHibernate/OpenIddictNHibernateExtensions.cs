@@ -36,10 +36,10 @@ namespace OpenIddict.NHibernate
 			.SetDefaultTokenEntity<OpenIddictNHibernateToken>();
 
 		builder
-			.ReplaceApplicationStore<OpenIddictNHibernateApplicationStore>()
-			.ReplaceAuthorizationStore<OpenIddictNHibernateAuthorizationStore>()
-			.ReplaceScopeStore<OpenIddictNHibernateScopeStore>()
-			.ReplaceTokenStore<OpenIddictNHibernateTokenStore>();
+			.ReplaceApplicationStore<OpenIddictNHibernateApplication, OpenIddictNHibernateApplicationStore>()
+			.ReplaceAuthorizationStore<OpenIddictNHibernateAuthorization, OpenIddictNHibernateAuthorizationStore>()
+			.ReplaceScopeStore<OpenIddictNHibernateScope, OpenIddictNHibernateScopeStore>()
+			.ReplaceTokenStore<OpenIddictNHibernateToken, OpenIddictNHibernateTokenStore>();
 
 		//// Note: a default session factory is always registered to make debugging easier when
 		//// no session type was configured by the user: the default implementation

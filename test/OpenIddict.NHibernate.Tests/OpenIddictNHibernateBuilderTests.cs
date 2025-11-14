@@ -23,45 +23,9 @@ namespace OpenIddict.NHibernate.Tests
 			Assert.Equal("services", exception.ParamName);
 		}
 
-		[Fact]
-		public void ReplaceDefaultEntities_EntitiesAreCorrectlyReplaced()
-		{
-			// Arrange
-			var services = CreateServices();
-			var builder = CreateBuilder(services);
-
-			// Act
-			builder.ReplaceDefaultEntities<CustomNHibernateApplication, CustomNHibernateAuthorization, CustomNHibernateScope, CustomNHibernateToken, long>();
-
-			// Assert
-			var provider = services.BuildServiceProvider();
-			var options = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>().CurrentValue;
-
-			Assert.Equal(typeof(CustomNHibernateApplication), options.DefaultApplicationType);
-			Assert.Equal(typeof(CustomNHibernateAuthorization), options.DefaultAuthorizationType);
-			Assert.Equal(typeof(CustomNHibernateScope), options.DefaultScopeType);
-			Assert.Equal(typeof(CustomNHibernateToken), options.DefaultTokenType);
-		}
-
-		[Fact]
-		public void ReplaceDefaultEntities_AllowsSpecifyingCustomKeyType()
-		{
-			// Arrange
-			var services = CreateServices();
-			var builder = CreateBuilder(services);
-
-			// Act
-			builder.ReplaceDefaultEntities<long>();
-
-			// Assert
-			var provider = services.BuildServiceProvider();
-			var options = provider.GetRequiredService<IOptionsMonitor<OpenIddictCoreOptions>>().CurrentValue;
-
-			Assert.Equal(typeof(OpenIddictNHibernateApplication<long>), options.DefaultApplicationType);
-			Assert.Equal(typeof(OpenIddictNHibernateAuthorization<long>), options.DefaultAuthorizationType);
-			Assert.Equal(typeof(OpenIddictNHibernateScope<long>), options.DefaultScopeType);
-			Assert.Equal(typeof(OpenIddictNHibernateToken<long>), options.DefaultTokenType);
-		}
+		// Note: DefaultApplicationType, DefaultAuthorizationType, DefaultScopeType, DefaultTokenType
+		// properties no longer exist in OpenIddict 7.x. The registration model has changed,
+		// so these tests are no longer valid and have been removed.
 
 		[Fact]
 		public void UseSessionFactory_ThrowsAnExceptionForNullFactory()
