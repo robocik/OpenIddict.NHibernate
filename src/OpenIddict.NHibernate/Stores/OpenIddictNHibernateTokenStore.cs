@@ -18,7 +18,7 @@ using NHibernate.Linq;
 using OpenIddict.Abstractions;
 using OpenIddict.NHibernate.Models;
 
-namespace OpenIddict.NHibernate.Stores
+namespace OpenIddict.NHibernate
 {
 	/// <summary>
 	/// Provides methods allowing to manage the tokens stored in a database.
@@ -39,7 +39,7 @@ namespace OpenIddict.NHibernate.Stores
 	/// </summary>
 	/// <typeparam name="TKey">The type of the entity primary keys.</typeparam>
 	public class OpenIddictNHibernateTokenStore<TKey> : OpenIddictNHibernateTokenStore<OpenIddictNHibernateToken<TKey>, OpenIddictNHibernateApplication<TKey>, OpenIddictNHibernateAuthorization<TKey>, TKey>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		public OpenIddictNHibernateTokenStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -54,7 +54,7 @@ namespace OpenIddict.NHibernate.Stores
 		where TToken : OpenIddictNHibernateToken<TKey, TApplication, TAuthorization>
 		where TApplication : OpenIddictNHibernateApplication<TKey, TAuthorization, TToken>
 		where TAuthorization : OpenIddictNHibernateAuthorization<TKey, TApplication, TToken>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		public OpenIddictNHibernateTokenStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -76,9 +76,9 @@ namespace OpenIddict.NHibernate.Stores
 		where TToken : OpenIddictNHibernateToken<TTokenKey, TApplication, TAuthorization>
 		where TApplication : OpenIddictNHibernateApplication<TApplicationKey, TAuthorization, TToken>
 		where TAuthorization : OpenIddictNHibernateAuthorization<TAuthorizationKey, TApplication, TToken>
-		where TTokenKey : IEquatable<TTokenKey>
-		where TApplicationKey : IEquatable<TApplicationKey>
-		where TAuthorizationKey : IEquatable<TAuthorizationKey>
+		where TTokenKey : notnull, IEquatable<TTokenKey>
+		where TApplicationKey : notnull, IEquatable<TApplicationKey>
+		where TAuthorizationKey : notnull, IEquatable<TAuthorizationKey>
 	{
 		public OpenIddictNHibernateTokenStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -858,35 +858,33 @@ namespace OpenIddict.NHibernate.Stores
 		{
 			var session = await this.Context.GetSessionAsync(cancellationToken);
 
-			var query = session.Query<TToken>();
+		var query = session.Query<TToken>();
 
-			query = query
-				.Fetch(authorization => authorization.Application)
-				.Fetch(authorization => authorization.Authorization);
+		query = query
+			.Fetch(token => token.Application)
+			.Fetch(token => token.Authorization);
 
-			if (!string.IsNullOrEmpty(subject))
-			{
-				query = query.Where(authorization => authorization.Subject == subject);
-			}
+		if (!string.IsNullOrEmpty(subject))
+		{
+			query = query.Where(token => token.Subject == subject);
+		}
 
-			if (!string.IsNullOrEmpty(client))
-			{
-				var key = this.ConvertIdentifierFromString<TApplicationKey>(client);
+		if (!string.IsNullOrEmpty(client))
+		{
+			var key = this.ConvertIdentifierFromString<TApplicationKey>(client);
 
-				query = query.Where(authorization => authorization.Application != null && authorization.Application!.Id!.Equals(key));
-			}
+			query = query.Where(token => token.Application != null && token.Application!.Id!.Equals(key));
+		}
 
-			if (!string.IsNullOrEmpty(status))
-			{
-				query = query.Where(authorization => authorization.Status == status);
-			}
+		if (!string.IsNullOrEmpty(status))
+		{
+			query = query.Where(token => token.Status == status);
+		}
 
-			if (!string.IsNullOrEmpty(type))
-			{
-				query = query.Where(authorization => authorization.Type == type);
-			}
-
-			List<Exception>? exceptions = null;
+		if (!string.IsNullOrEmpty(type))
+		{
+			query = query.Where(token => token.Type == type);
+		}			List<Exception>? exceptions = null;
 
 			var result = 0L;
 
@@ -940,14 +938,13 @@ namespace OpenIddict.NHibernate.Stores
 
 			var session = await this.Context.GetSessionAsync(cancellationToken);
 
-			var tokens = await session
-				.Query<TToken>()
-				.Fetch(authorization => authorization.Application)
-				.Fetch(authorization => authorization.Authorization)
-				.Where(authorization => authorization.Application!.Id!.Equals(key))
-				.ToListAsync(cancellationToken);
-
-			foreach (var token in tokens)
+		var tokens = await session
+			.Query<TToken>()
+			.Fetch(token => token.Application)
+			.Fetch(token => token.Authorization)
+			.Where(token => token.Application!.Id!.Equals(key))
+			.Where(token => token.Status != OpenIddictConstants.Statuses.Revoked)
+			.ToListAsync(cancellationToken);			foreach (var token in tokens)
 			{
 				token.Status = OpenIddictConstants.Statuses.Revoked;
 
@@ -996,14 +993,13 @@ namespace OpenIddict.NHibernate.Stores
 
 			var session = await this.Context.GetSessionAsync(cancellationToken);
 
-			var tokens = await session
-				.Query<TToken>()
-				.Fetch(authorization => authorization.Application)
-				.Fetch(authorization => authorization.Authorization)
-				.Where(authorization => authorization.Authorization!.Id!.Equals(key))
-				.ToListAsync(cancellationToken);
-
-			foreach (var token in tokens)
+		var tokens = await session
+			.Query<TToken>()
+			.Fetch(token => token.Application)
+			.Fetch(token => token.Authorization)
+			.Where(token => token.Authorization!.Id!.Equals(key))
+			.Where(token => token.Status != OpenIddictConstants.Statuses.Revoked)
+			.ToListAsync(cancellationToken);			foreach (var token in tokens)
 			{
 				token.Status = OpenIddictConstants.Statuses.Revoked;
 
@@ -1050,14 +1046,13 @@ namespace OpenIddict.NHibernate.Stores
 
 			var session = await this.Context.GetSessionAsync(cancellationToken);
 
-			var tokens = await session
-				.Query<TToken>()
-				.Fetch(authorization => authorization.Application)
-				.Fetch(authorization => authorization.Authorization)
-				.Where(authorization => authorization.Subject == subject)
-				.ToListAsync(cancellationToken);
-
-			foreach (var token in tokens)
+		var tokens = await session
+			.Query<TToken>()
+			.Fetch(token => token.Application)
+			.Fetch(token => token.Authorization)
+			.Where(token => token.Subject == subject)
+			.Where(token => token.Status != OpenIddictConstants.Statuses.Revoked)
+			.ToListAsync(cancellationToken);			foreach (var token in tokens)
 			{
 				token.Status = OpenIddictConstants.Statuses.Revoked;
 
@@ -1376,36 +1371,62 @@ namespace OpenIddict.NHibernate.Stores
 		/// </summary>
 		/// <param name="identifier">The identifier to convert.</param>
 		/// <returns>An instance of <typeparamref name="TKey"/> representing the provided identifier.</returns>
-		public virtual TKey? ConvertIdentifierFromString<TKey>(string? identifier)
-			where TKey : IEquatable<TKey>
+	public virtual TKey? ConvertIdentifierFromString<TKey>(string? identifier)
+		where TKey : notnull, IEquatable<TKey>
 
+	{
+		if (string.IsNullOrEmpty(identifier))
 		{
-			if (string.IsNullOrEmpty(identifier))
-			{
-				return default;
-			}
-
-			return (TKey?)TypeDescriptor
-				.GetConverter(typeof(TKey))
-				.ConvertFromInvariantString(identifier);
+			return default;
 		}
 
-		/// <summary>
+		// Optimization: if the key is a string, directly return it as-is.
+		if (typeof(TKey) == typeof(string))
+		{
+			return (TKey?)(object?)identifier;
+		}
+		else
+		{
+			var converter =
+#if SUPPORTS_TYPE_DESCRIPTOR_TYPE_REGISTRATION
+				TypeDescriptor.GetConverterFromRegisteredType(typeof(TKey));
+#else
+				TypeDescriptor.GetConverter(typeof(TKey));
+#endif
+						
+			return (TKey?)converter.ConvertFromInvariantString(identifier);
+		}
+	}		/// <summary>
 		/// Converts the provided identifier to its string representation.
 		/// </summary>
 		/// <param name="identifier">The identifier to convert.</param>
 		/// <returns>A <see cref="string"/> representation of the provided identifier.</returns>
 		public virtual string? ConvertIdentifierToString<TKey>(TKey? identifier)
-			where TKey : IEquatable<TKey>
+			where TKey : notnull, IEquatable<TKey>
 		{
 			if (Equals(identifier, default(TKey)))
 			{
 				return null;
 			}
 
-			return TypeDescriptor
-				.GetConverter(typeof(TKey))
-				.ConvertToInvariantString(identifier);
+			// Optimization: if the key is a string, directly return it as-is.
+			string? value = identifier as string;
+
+			if (value == null)
+			{
+				var converter =
+#if SUPPORTS_TYPE_DESCRIPTOR_TYPE_REGISTRATION
+					TypeDescriptor.GetConverterFromRegisteredType(typeof(TKey));
+#else
+					TypeDescriptor.GetConverter(typeof(TKey));
+#endif
+
+				return converter.ConvertToInvariantString(identifier);
+			}
+			else
+			{
+				return value;
+			}
 		}
 	}
 }

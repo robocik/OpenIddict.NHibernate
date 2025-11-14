@@ -4,7 +4,7 @@ using NHibernate.Mapping.ByCode;
 using NHibernate.Mapping.ByCode.Conformist;
 using OpenIddict.NHibernate.Models;
 
-namespace OpenIddict.NHibernate.Mappings
+namespace OpenIddict.NHibernate
 {
 	/// <summary>
 	/// Defines a relational mapping for the Application entity.
@@ -14,11 +14,11 @@ namespace OpenIddict.NHibernate.Mappings
 	/// <typeparam name="TToken">The type of the Token entity.</typeparam>
 	/// <typeparam name="TKey">The type of the Key entity.</typeparam>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public class OpenIddictNHibernateApplicationMapping<TApplication, TAuthorization, TToken, TKey> : ClassMapping<TApplication>
+	public sealed class OpenIddictNHibernateApplicationMapping<TApplication, TAuthorization, TToken, TKey> : ClassMapping<TApplication>
 		where TApplication : OpenIddictNHibernateApplication<TKey, TAuthorization, TToken>
 		where TAuthorization : OpenIddictNHibernateAuthorization<TKey, TApplication, TToken>
 		where TToken : OpenIddictNHibernateToken<TKey, TApplication, TAuthorization>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		public OpenIddictNHibernateApplicationMapping()
 		{

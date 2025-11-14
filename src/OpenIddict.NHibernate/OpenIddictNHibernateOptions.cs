@@ -5,7 +5,7 @@ namespace OpenIddict.NHibernate
 	/// <summary>
 	/// Provides various settings needed to configure the OpenIddict NHibernate integration.
 	/// </summary>
-	public class OpenIddictNHibernateOptions
+	public sealed class OpenIddictNHibernateOptions
 	{
 		/// <summary>
 		/// Gets or sets the session factory used by the OpenIddict NHibernate stores.

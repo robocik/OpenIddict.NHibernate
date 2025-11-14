@@ -20,7 +20,7 @@ namespace OpenIddict.NHibernate.Models
 	/// Represents an OpenIddict token.
 	/// </summary>
 	public class OpenIddictNHibernateToken<TKey> : OpenIddictNHibernateToken<TKey, OpenIddictNHibernateApplication<TKey>, OpenIddictNHibernateAuthorization<TKey>>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 	}
 

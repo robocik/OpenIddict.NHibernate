@@ -20,7 +20,7 @@ using NHibernate.Linq;
 using OpenIddict.Abstractions;
 using OpenIddict.NHibernate.Models;
 
-namespace OpenIddict.NHibernate.Stores
+namespace OpenIddict.NHibernate
 {
 	/// <summary>
 	/// Provides methods allowing to manage the applications stored in a database.
@@ -41,7 +41,7 @@ namespace OpenIddict.NHibernate.Stores
 	/// </summary>
 	/// <typeparam name="TKey">The type of the entity primary keys.</typeparam>
 	public class OpenIddictNHibernateApplicationStore<TKey> : OpenIddictNHibernateApplicationStore<OpenIddictNHibernateApplication<TKey>, OpenIddictNHibernateAuthorization<TKey>, OpenIddictNHibernateToken<TKey>, TKey>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		public OpenIddictNHibernateApplicationStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -56,7 +56,7 @@ namespace OpenIddict.NHibernate.Stores
 		where TApplication : OpenIddictNHibernateApplication<TKey, TAuthorization, TToken>
 		where TAuthorization : OpenIddictNHibernateAuthorization<TKey, TApplication, TToken>
 		where TToken : OpenIddictNHibernateToken<TKey, TApplication, TAuthorization>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		public OpenIddictNHibernateApplicationStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -80,9 +80,9 @@ namespace OpenIddict.NHibernate.Stores
 		where TApplication : OpenIddictNHibernateApplication<TApplicationKey, TAuthorization, TToken>
 		where TAuthorization : OpenIddictNHibernateAuthorization<TAuthorizationKey, TApplication, TToken>
 		where TToken : OpenIddictNHibernateToken<TTokenKey, TApplication, TAuthorization>
-		where TApplicationKey : IEquatable<TApplicationKey>
-		where TAuthorizationKey : IEquatable<TAuthorizationKey>
-		where TTokenKey : IEquatable<TTokenKey>
+		where TApplicationKey : notnull, IEquatable<TApplicationKey>
+		where TAuthorizationKey : notnull, IEquatable<TAuthorizationKey>
+		where TTokenKey : notnull, IEquatable<TTokenKey>
 	{
 		public OpenIddictNHibernateApplicationStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -185,18 +185,18 @@ namespace OpenIddict.NHibernate.Stores
 			{
 				// Delete all the tokens associated with the application.
 				await session
-					.Query<TAuthorization>()
-					.Fetch(authorization => authorization.Application)
-					.Where(authorization => authorization.Application != null && authorization.Application.Id!.Equals(application.Id))
-					.DeleteAsync(cancellationToken);
-
-				// Delete all the tokens associated with the application.
-				await session
 					.Query<TToken>()
 					.Fetch(token => token.Application)
 					.Fetch(token => token.Authorization)
 					.Where(token => token.Authorization == null) // Copied from https://github.com/openiddict/openiddict-core/blob/dev/src/OpenIddict.EntityFramework/Stores/OpenIddictEntityFrameworkApplicationStore.cs#L142-L142
 					.Where(token => token.Application != null && token.Application.Id!.Equals(application.Id))
+					.DeleteAsync(cancellationToken);
+
+				// Remove all the authorizations associated with the application and the tokens attached to these implicit or explicit authorizations.
+				await session
+					.Query<TAuthorization>()
+					.Fetch(authorization => authorization.Application)
+					.Where(authorization => authorization.Application != null && authorization.Application.Id!.Equals(application.Id))
 					.DeleteAsync(cancellationToken);
 
 				await session.DeleteAsync(application, cancellationToken);
@@ -1014,18 +1014,16 @@ namespace OpenIddict.NHibernate.Stores
 			return default;
 		}
 
-		public ValueTask SetJsonWebKeySetAsync(TApplication application, JsonWebKeySet? set, CancellationToken cancellationToken)
-		{
-			ArgumentNullException.ThrowIfNull(application);
+	public ValueTask SetJsonWebKeySetAsync(TApplication application, JsonWebKeySet? set, CancellationToken cancellationToken)
+	{
+		ArgumentNullException.ThrowIfNull(application);
 
-			application.JsonWebKeySet = set is not null
-				? JsonSerializer.Serialize(set)
-				: null;
+		application.JsonWebKeySet = set is not null
+			? JsonSerializer.Serialize(set, OpenIddictSerializer.Default.JsonWebKeySet)
+			: null;
 
-			return default;
-		}
-
-		/// <summary>
+		return default;
+	}		/// <summary>
 		/// Sets the permissions associated with an application.
 		/// </summary>
 		/// <param name="application">The application.</param>
@@ -1303,35 +1301,61 @@ namespace OpenIddict.NHibernate.Stores
 		/// </summary>
 		/// <param name="identifier">The identifier to convert.</param>
 		/// <returns>An instance of <typeparamref name="TKey"/> representing the provided identifier.</returns>
-		public virtual TKey? ConvertIdentifierFromString<TKey>(string? identifier)
-			where TKey : IEquatable<TKey>
+	public virtual TKey? ConvertIdentifierFromString<TKey>(string? identifier)
+		where TKey : notnull, IEquatable<TKey>
+	{
+		if (string.IsNullOrEmpty(identifier))
 		{
-			if (string.IsNullOrEmpty(identifier))
-			{
-				return default;
-			}
-
-			return (TKey?)TypeDescriptor
-				.GetConverter(typeof(TKey))
-				.ConvertFromInvariantString(identifier);
+			return default;
 		}
 
-		/// <summary>
+		// Optimization: if the key is a string, directly return it as-is.
+		if (typeof(TKey) == typeof(string))
+		{
+			return (TKey?)(object?)identifier;
+		}
+		else
+		{
+			var converter =
+#if SUPPORTS_TYPE_DESCRIPTOR_TYPE_REGISTRATION
+				TypeDescriptor.GetConverterFromRegisteredType(typeof(TKey));
+#else
+				TypeDescriptor.GetConverter(typeof(TKey));
+#endif
+						
+			return (TKey?)converter.ConvertFromInvariantString(identifier);
+		}
+	}		/// <summary>
 		/// Converts the provided identifier to its string representation.
 		/// </summary>
 		/// <param name="identifier">The identifier to convert.</param>
 		/// <returns>A <see cref="string"/> representation of the provided identifier.</returns>
 		public virtual string? ConvertIdentifierToString<TKey>(TKey? identifier)
-			where TKey : IEquatable<TKey>
+			where TKey : notnull, IEquatable<TKey>
 		{
 			if (Equals(identifier, default(TKey)))
 			{
 				return null;
 			}
 
-			return TypeDescriptor
-				.GetConverter(typeof(TKey))
-				.ConvertToInvariantString(identifier);
+			// Optimization: if the key is a string, directly return it as-is.
+			string? value = identifier as string;
+
+			if (value == null)
+			{
+				var converter =
+#if SUPPORTS_TYPE_DESCRIPTOR_TYPE_REGISTRATION
+					TypeDescriptor.GetConverterFromRegisteredType(typeof(TKey));
+#else
+					TypeDescriptor.GetConverter(typeof(TKey));
+#endif
+
+				return converter.ConvertToInvariantString(identifier);
+			}
+			else
+			{
+				return value;
+			}
 		}
 	}
 }

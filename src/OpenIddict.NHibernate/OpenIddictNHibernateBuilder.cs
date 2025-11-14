@@ -1,7 +1,9 @@
 using System;
 using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NHibernate;
+using OpenIddict.Abstractions;
 using OpenIddict.Core;
 using OpenIddict.NHibernate.Models;
 
@@ -10,7 +12,7 @@ namespace OpenIddict.NHibernate
 	/// <summary>
 	/// Exposes the necessary methods required to configure the OpenIddict NHibernate services.
 	/// </summary>
-	public class OpenIddictNHibernateBuilder
+	public sealed class OpenIddictNHibernateBuilder
 	{
 		/// <summary>
 		/// Initializes a new instance of <see cref="OpenIddictNHibernateBuilder"/>.
@@ -62,7 +64,7 @@ namespace OpenIddict.NHibernate
 		/// </summary>
 		/// <returns>The <see cref="OpenIddictNHibernateBuilder"/>.</returns>
 		public OpenIddictNHibernateBuilder ReplaceDefaultEntities<TKey>()
-			where TKey : IEquatable<TKey>
+			where TKey : notnull, IEquatable<TKey>
 		{
 			return this.ReplaceDefaultEntities<OpenIddictNHibernateApplication<TKey>, OpenIddictNHibernateAuthorization<TKey>, OpenIddictNHibernateScope<TKey>, OpenIddictNHibernateToken<TKey>, TKey>();
 		}
@@ -76,18 +78,38 @@ namespace OpenIddict.NHibernate
 			where TAuthorization : OpenIddictNHibernateAuthorization<TKey, TApplication, TToken>
 			where TScope : OpenIddictNHibernateScope<TKey>
 			where TToken : OpenIddictNHibernateToken<TKey, TApplication, TAuthorization>
-			where TKey : IEquatable<TKey>
+			where TKey : notnull, IEquatable<TKey>
 		{
-			this.Services.Configure<OpenIddictCoreOptions>(options =>
-				{
-					options.DefaultApplicationType = typeof(TApplication);
-					options.DefaultAuthorizationType = typeof(TAuthorization);
-					options.DefaultScopeType = typeof(TScope);
-					options.DefaultTokenType = typeof(TToken);
-				}
-			);
+#if SUPPORTS_TYPE_DESCRIPTOR_TYPE_REGISTRATION
+			// If the specified key type isn't a string (which is special-cased by the stores to avoid having to resolve
+			// a TypeDescriptor instance) and the platform supports type registration, register the key type to ensure the
+			// TypeDescriptor associated with that type will be preserved by the IL Linker and can be resolved at runtime.
+			if (typeof(TKey) != typeof(string))
+			{
+				TypeDescriptor.RegisterType<TKey>();
+			}
+#endif
 
-			return this;
-		}
+			Services.Replace(ServiceDescriptor.Scoped<IOpenIddictApplicationManager>(provider => provider.GetRequiredService<OpenIddictApplicationManager<TApplication>>()));
+			Services.Replace(ServiceDescriptor.Scoped<IOpenIddictAuthorizationManager>(provider => provider.GetRequiredService<OpenIddictAuthorizationManager<TAuthorization>>()));
+			Services.Replace(ServiceDescriptor.Scoped<IOpenIddictScopeManager>(provider => provider.GetRequiredService<OpenIddictScopeManager<TScope>>()));
+			Services.Replace(ServiceDescriptor.Scoped<IOpenIddictTokenManager>(provider => provider.GetRequiredService<OpenIddictTokenManager<TToken>>()));
+
+		Services.Replace(ServiceDescriptor.Scoped<IOpenIddictApplicationStore<TApplication>, OpenIddictNHibernateApplicationStore<TApplication, TAuthorization, TToken, TKey>>());
+		Services.Replace(ServiceDescriptor.Scoped<IOpenIddictAuthorizationStore<TAuthorization>, OpenIddictNHibernateAuthorizationStore<TAuthorization, TApplication, TToken, TKey>>());
+		Services.Replace(ServiceDescriptor.Scoped<IOpenIddictScopeStore<TScope>, OpenIddictNHibernateScopeStore<TScope, TKey>>());
+		Services.Replace(ServiceDescriptor.Scoped<IOpenIddictTokenStore<TToken>, OpenIddictNHibernateTokenStore<TToken, TApplication, TAuthorization, TKey>>());
+
+		return this;
 	}
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public override bool Equals(object? obj) => base.Equals(obj);
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public override int GetHashCode() => base.GetHashCode();
+
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public override string? ToString() => base.ToString();
+}
 }

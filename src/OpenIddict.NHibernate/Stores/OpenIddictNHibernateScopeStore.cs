@@ -18,7 +18,7 @@ using NHibernate.Linq;
 using OpenIddict.Abstractions;
 using OpenIddict.NHibernate.Models;
 
-namespace OpenIddict.NHibernate.Stores
+namespace OpenIddict.NHibernate
 {
 	/// <summary>
 	/// Provides methods allowing to manage the scopes stored in a database.
@@ -39,7 +39,7 @@ namespace OpenIddict.NHibernate.Stores
 	/// </summary>
 	/// <typeparam name="TKey">The type of the entity primary keys.</typeparam>
 	public class OpenIddictNHibernateScopeStore<TKey> : OpenIddictNHibernateScopeStore<OpenIddictNHibernateScope<TKey>, TKey>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		public OpenIddictNHibernateScopeStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -57,7 +57,7 @@ namespace OpenIddict.NHibernate.Stores
 	/// <typeparam name="TKey">The type of the entity primary keys.</typeparam>
 	public class OpenIddictNHibernateScopeStore<TScope, TKey> : IOpenIddictScopeStore<TScope>
 		where TScope : OpenIddictNHibernateScope<TKey>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		public OpenIddictNHibernateScopeStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -880,19 +880,30 @@ namespace OpenIddict.NHibernate.Stores
 		/// </summary>
 		/// <param name="identifier">The identifier to convert.</param>
 		/// <returns>An instance of <typeparamref name="TKey"/> representing the provided identifier.</returns>
-		public virtual TKey? ConvertIdentifierFromString(string identifier)
+	public virtual TKey? ConvertIdentifierFromString(string? identifier)
+	{
+		if (string.IsNullOrEmpty(identifier))
 		{
-			if (string.IsNullOrEmpty(identifier))
-			{
-				return default;
-			}
-
-			return (TKey?)TypeDescriptor
-				.GetConverter(typeof(TKey))
-				.ConvertFromInvariantString(identifier);
+			return default;
 		}
 
-		/// <summary>
+		// Optimization: if the key is a string, directly return it as-is.
+		if (typeof(TKey) == typeof(string))
+		{
+			return (TKey?)(object?)identifier;
+		}
+		else
+		{
+			var converter =
+#if SUPPORTS_TYPE_DESCRIPTOR_TYPE_REGISTRATION
+				TypeDescriptor.GetConverterFromRegisteredType(typeof(TKey));
+#else
+				TypeDescriptor.GetConverter(typeof(TKey));
+#endif
+						
+			return (TKey?)converter.ConvertFromInvariantString(identifier);
+		}
+	}		/// <summary>
 		/// Converts the provided identifier to its string representation.
 		/// </summary>
 		/// <param name="identifier">The identifier to convert.</param>
@@ -904,9 +915,24 @@ namespace OpenIddict.NHibernate.Stores
 				return null;
 			}
 
-			return TypeDescriptor
-				.GetConverter(typeof(TKey))
-				.ConvertToInvariantString(identifier);
+			// Optimization: if the key is a string, directly return it as-is.
+			string? value = identifier as string;
+
+			if (value == null)
+			{
+				var converter =
+#if SUPPORTS_TYPE_DESCRIPTOR_TYPE_REGISTRATION
+					TypeDescriptor.GetConverterFromRegisteredType(typeof(TKey));
+#else
+					TypeDescriptor.GetConverter(typeof(TKey));
+#endif
+
+				return converter.ConvertToInvariantString(identifier);
+			}
+			else
+			{
+				return value;
+			}
 		}
 	}
 }

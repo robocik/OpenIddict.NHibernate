@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using NHibernate;
@@ -7,6 +8,7 @@ namespace OpenIddict.NHibernate
 	/// <summary>
 	/// Exposes the NHibernate session used by the OpenIddict stores.
 	/// </summary>
+	[EditorBrowsable(EditorBrowsableState.Advanced)]
 	public interface IOpenIddictNHibernateContext
 	{
 		/// <summary>

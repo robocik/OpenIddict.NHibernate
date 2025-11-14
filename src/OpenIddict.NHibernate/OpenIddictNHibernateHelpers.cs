@@ -6,7 +6,6 @@ using System.Threading;
 using NHibernate.Cfg;
 using NHibernate.Linq;
 using NHibernate.Mapping.ByCode;
-using OpenIddict.NHibernate.Mappings;
 using OpenIddict.NHibernate.Models;
 
 namespace OpenIddict.NHibernate
@@ -34,7 +33,7 @@ namespace OpenIddict.NHibernate
 		/// <param name="configuration">The NHibernate configuration builder.</param>
 		/// <returns>The <see cref="Configuration"/>.</returns>
 		public static Configuration UseOpenIddict<TKey>(this Configuration configuration)
-			where TKey : IEquatable<TKey>
+			where TKey : notnull, IEquatable<TKey>
 		{
 			return configuration.UseOpenIddict<OpenIddictNHibernateApplication<TKey>, OpenIddictNHibernateAuthorization<TKey>, OpenIddictNHibernateScope<TKey>, OpenIddictNHibernateToken<TKey>, TKey>();
 		}
@@ -50,7 +49,7 @@ namespace OpenIddict.NHibernate
 			where TAuthorization : OpenIddictNHibernateAuthorization<TKey, TApplication, TToken>
 			where TScope : OpenIddictNHibernateScope<TKey>
 			where TToken : OpenIddictNHibernateToken<TKey, TApplication, TAuthorization>
-			where TKey : IEquatable<TKey>
+			where TKey : notnull, IEquatable<TKey>
 		{
 			ArgumentNullException.ThrowIfNull(configuration);
 

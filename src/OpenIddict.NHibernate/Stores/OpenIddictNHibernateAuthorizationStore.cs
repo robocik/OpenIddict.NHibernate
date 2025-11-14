@@ -20,7 +20,7 @@ using OpenIddict.Abstractions;
 using OpenIddict.NHibernate.Extensions;
 using OpenIddict.NHibernate.Models;
 
-namespace OpenIddict.NHibernate.Stores
+namespace OpenIddict.NHibernate
 {
 	/// <summary>
 	/// Provides methods allowing to manage the authorizations stored in a database.
@@ -41,7 +41,7 @@ namespace OpenIddict.NHibernate.Stores
 	/// </summary>
 	/// <typeparam name="TKey">The type of the entity primary keys.</typeparam>
 	public class OpenIddictNHibernateAuthorizationStore<TKey> : OpenIddictNHibernateAuthorizationStore<OpenIddictNHibernateAuthorization<TKey>, OpenIddictNHibernateApplication<TKey>, OpenIddictNHibernateToken<TKey>, TKey>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		public OpenIddictNHibernateAuthorizationStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -56,7 +56,7 @@ namespace OpenIddict.NHibernate.Stores
 		where TAuthorization : OpenIddictNHibernateAuthorization<TKey, TApplication, TToken>
 		where TApplication : OpenIddictNHibernateApplication<TKey, TAuthorization, TToken>
 		where TToken : OpenIddictNHibernateToken<TKey, TApplication, TAuthorization>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		public OpenIddictNHibernateAuthorizationStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -78,9 +78,9 @@ namespace OpenIddict.NHibernate.Stores
 		where TAuthorization : OpenIddictNHibernateAuthorization<TAuthorizationKey, TApplication, TToken>
 		where TApplication : OpenIddictNHibernateApplication<TApplicationKey, TAuthorization, TToken>
 		where TToken : OpenIddictNHibernateToken<TTokenKey, TApplication, TAuthorization>
-		where TAuthorizationKey : IEquatable<TAuthorizationKey>
-		where TApplicationKey : IEquatable<TApplicationKey>
-		where TTokenKey : IEquatable<TTokenKey>
+		where TAuthorizationKey : notnull, IEquatable<TAuthorizationKey>
+		where TApplicationKey : notnull, IEquatable<TApplicationKey>
+		where TTokenKey : notnull, IEquatable<TTokenKey>
 	{
 		public OpenIddictNHibernateAuthorizationStore(IMemoryCache cache
 			, IOpenIddictNHibernateContext context
@@ -706,7 +706,7 @@ namespace OpenIddict.NHibernate.Stores
 			{
 				var deletedEntries = 0;
 
-				// Delete all the tokens associated with the application.
+				// Delete all the authorizations based on the filter criteria.
 				var entriesToBeDeleted = await session
 					.Query<TAuthorization>()
 					.Fetch(authorization => authorization.Tokens)
@@ -726,7 +726,7 @@ namespace OpenIddict.NHibernate.Stores
 
 					deletedEntries += await session
 						.Query<TAuthorization>()
-						.Where(token => batch.Contains(token.Id))
+						.Where(authorization => batch.Contains(authorization.Id))
 						.DeleteAsync(cancellationToken);
 				}
 
@@ -1154,35 +1154,61 @@ namespace OpenIddict.NHibernate.Stores
 		/// </summary>
 		/// <param name="identifier">The identifier to convert.</param>
 		/// <returns>An instance of <typeparamref name="TKey"/> representing the provided identifier.</returns>
-		public virtual TKey? ConvertIdentifierFromString<TKey>(string? identifier)
-			where TKey : IEquatable<TKey>
+	public virtual TKey? ConvertIdentifierFromString<TKey>(string? identifier)
+		where TKey : notnull, IEquatable<TKey>
+	{
+		if (string.IsNullOrEmpty(identifier))
 		{
-			if (string.IsNullOrEmpty(identifier))
-			{
-				return default;
-			}
-
-			return (TKey?)TypeDescriptor
-				.GetConverter(typeof(TKey))
-				.ConvertFromInvariantString(identifier);
+			return default;
 		}
 
-		/// <summary>
+		// Optimization: if the key is a string, directly return it as-is.
+		if (typeof(TKey) == typeof(string))
+		{
+			return (TKey?)(object?)identifier;
+		}
+		else
+		{
+			var converter =
+#if SUPPORTS_TYPE_DESCRIPTOR_TYPE_REGISTRATION
+				TypeDescriptor.GetConverterFromRegisteredType(typeof(TKey));
+#else
+				TypeDescriptor.GetConverter(typeof(TKey));
+#endif
+						
+			return (TKey?)converter.ConvertFromInvariantString(identifier);
+		}
+	}		/// <summary>
 		/// Converts the provided identifier to its string representation.
 		/// </summary>
 		/// <param name="identifier">The identifier to convert.</param>
 		/// <returns>A <see cref="string"/> representation of the provided identifier.</returns>
 		public virtual string? ConvertIdentifierToString<TKey>(TKey? identifier)
-			where TKey : IEquatable<TKey>
+			where TKey : notnull, IEquatable<TKey>
 		{
 			if (Equals(identifier, default(TKey)))
 			{
 				return null;
 			}
 
-			return TypeDescriptor
-				.GetConverter(typeof(TKey))
-				.ConvertToInvariantString(identifier);
+			// Optimization: if the key is a string, directly return it as-is.
+			string? value = identifier as string;
+
+			if (value == null)
+			{
+				var converter =
+#if SUPPORTS_TYPE_DESCRIPTOR_TYPE_REGISTRATION
+					TypeDescriptor.GetConverterFromRegisteredType(typeof(TKey));
+#else
+					TypeDescriptor.GetConverter(typeof(TKey));
+#endif
+
+				return converter.ConvertToInvariantString(identifier);
+			}
+			else
+			{
+				return value;
+			}
 		}
 	}
 }

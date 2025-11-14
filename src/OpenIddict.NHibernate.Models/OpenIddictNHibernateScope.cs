@@ -21,7 +21,7 @@ namespace OpenIddict.NHibernate.Models
 	/// </summary>
 	[DebuggerDisplay("Id = {Id.ToString(),nq} ; Name = {Name,nq}")]
 	public class OpenIddictNHibernateScope<TKey>
-		where TKey : IEquatable<TKey>
+		where TKey : notnull, IEquatable<TKey>
 	{
 		/// <summary>
 		/// Gets or sets the concurrency token.
