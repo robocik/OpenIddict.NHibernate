@@ -86,6 +86,8 @@ namespace OpenIddict.NHibernate
 			this.Bag(application => application.Authorizations, map =>
 			{
 				map.Key(key => key.Column("ApplicationId"));
+				map.Inverse(true);
+				map.Access(Accessor.ReadOnly);
 			}, map =>
 			{
 				map.OneToMany();
@@ -94,6 +96,8 @@ namespace OpenIddict.NHibernate
 			this.Bag(application => application.Tokens, map =>
 			{
 				map.Key(key => key.Column("ApplicationId"));
+				map.Inverse(true);
+				map.Access(Accessor.ReadOnly);
 			}, map =>
 			{
 				map.OneToMany();

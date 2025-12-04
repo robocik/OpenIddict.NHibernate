@@ -67,6 +67,8 @@ namespace OpenIddict.NHibernate
 		});			this.Bag(authorization => authorization.Tokens, map =>
 			{
 				map.Key(key => key.Column("AuthorizationId"));
+				map.Inverse(true);
+				map.Access(Accessor.ReadOnly);
 			}, map =>
 			{
 				map.OneToMany();

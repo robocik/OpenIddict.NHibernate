@@ -1,5 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenIddict.NHibernate", "src\OpenIddict.NHibernate\OpenIddict.NHibernate.csproj", "{2DFD284D-A4B0-4EF4-848B-85AC53992F91}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenIddict.NHibernate.Models", "src\OpenIddict.NHibernate.Models\OpenIddict.NHibernate.Models.csproj", "{00FA3640-71F1-4EF2-A914-CB874ECD0F33}"
@@ -9,6 +10,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{F4369F36-5560-44E7-A9D0-4E690C756B4F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenIddict.NHibernate.Tests", "test\OpenIddict.NHibernate.Tests\OpenIddict.NHibernate.Tests.csproj", "{2E520281-97B9-4788-92EF-11BA43DE19F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenIddict.NHibernate.IntegrationTests", "test\OpenIddict.NHibernate.IntegrationTests\OpenIddict.NHibernate.IntegrationTests.csproj", "{FFD92B2D-3A6C-42CE-8CFA-5725B1E3E83A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,10 +31,15 @@ Global
 		{2E520281-97B9-4788-92EF-11BA43DE19F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E520281-97B9-4788-92EF-11BA43DE19F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E520281-97B9-4788-92EF-11BA43DE19F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFD92B2D-3A6C-42CE-8CFA-5725B1E3E83A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFD92B2D-3A6C-42CE-8CFA-5725B1E3E83A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFD92B2D-3A6C-42CE-8CFA-5725B1E3E83A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFD92B2D-3A6C-42CE-8CFA-5725B1E3E83A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{2DFD284D-A4B0-4EF4-848B-85AC53992F91} = {311DDBB3-F02E-4DAF-B282-9F789D7117ED}
 		{00FA3640-71F1-4EF2-A914-CB874ECD0F33} = {311DDBB3-F02E-4DAF-B282-9F789D7117ED}
 		{2E520281-97B9-4788-92EF-11BA43DE19F2} = {F4369F36-5560-44E7-A9D0-4E690C756B4F}
+		{FFD92B2D-3A6C-42CE-8CFA-5725B1E3E83A} = {F4369F36-5560-44E7-A9D0-4E690C756B4F}
 	EndGlobalSection
 EndGlobal
