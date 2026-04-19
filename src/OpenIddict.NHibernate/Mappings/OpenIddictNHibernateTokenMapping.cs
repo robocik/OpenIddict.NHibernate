@@ -24,7 +24,7 @@ namespace OpenIddict.NHibernate
 		{
 			this.Id(token => token.Id, map =>
 			{
-				map.Generator(Generators.Identity);
+				map.Generator(Generators.Assigned);
 			});
 
 			this.Version(token => token.ConcurrencyToken, map =>

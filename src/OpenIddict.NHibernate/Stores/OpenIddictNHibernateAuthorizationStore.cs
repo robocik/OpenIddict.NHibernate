@@ -14,10 +14,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using NHibernate;
-using NHibernate.Event.Default;
 using NHibernate.Linq;
 using OpenIddict.Abstractions;
-using OpenIddict.NHibernate.Extensions;
 using OpenIddict.NHibernate.Models;
 
 namespace OpenIddict.NHibernate
@@ -182,12 +180,19 @@ namespace OpenIddict.NHibernate
 
 			try
 			{
-				// Delete all the tokens associated with the authorization.
-				await session
+				var authorizationId = authorization.Id;
+
+				// Delete all tokens associated with the authorization. Using entity deletes avoids
+				// NHibernate's HQL bulk delete limitations with joined navigation properties.
+				var tokens = await session
 					.Query<TToken>()
-					.Fetch(token => token.Authorization)
-					.Where(token => token.Authorization != null && token.Authorization.Id!.Equals(authorization.Id))
-					.DeleteAsync(cancellationToken);
+					.Where(token => token.Authorization != null && token.Authorization.Id!.Equals(authorizationId))
+					.ToListAsync(cancellationToken);
+
+				foreach (var token in tokens)
+				{
+					await session.DeleteAsync(token, cancellationToken);
+				}
 
 				await session.DeleteAsync(authorization, cancellationToken);
 				await transaction.CommitAsync(cancellationToken);
@@ -414,7 +419,7 @@ namespace OpenIddict.NHibernate
 				return new ValueTask<DateTimeOffset?>(result: null);
 			}
 
-			return new ValueTask<DateTimeOffset?>(DateTime.SpecifyKind(authorization.CreationDate.Value, DateTimeKind.Utc));
+			return new ValueTask<DateTimeOffset?>(new DateTimeOffset(DateTime.SpecifyKind(authorization.CreationDate.Value, DateTimeKind.Utc)));
 		}
 
 		/// <summary>

@@ -493,7 +493,9 @@ namespace OpenIddict.NHibernate
 				throw new ArgumentNullException(nameof(token));
 			}
 
-			return new ValueTask<DateTimeOffset?>(token.CreationDate);
+			return new ValueTask<DateTimeOffset?>(token.CreationDate is null
+				? null
+				: new DateTimeOffset(DateTime.SpecifyKind(token.CreationDate.Value, DateTimeKind.Utc)));
 		}
 
 		/// <summary>
@@ -512,7 +514,9 @@ namespace OpenIddict.NHibernate
 				throw new ArgumentNullException(nameof(token));
 			}
 
-			return new ValueTask<DateTimeOffset?>(token.ExpirationDate);
+			return new ValueTask<DateTimeOffset?>(token.ExpirationDate is null
+				? null
+				: new DateTimeOffset(DateTime.SpecifyKind(token.ExpirationDate.Value, DateTimeKind.Utc)));
 		}
 
 		/// <summary>
@@ -609,7 +613,7 @@ namespace OpenIddict.NHibernate
 				return new ValueTask<DateTimeOffset?>(result: null);
 			}
 
-			return new ValueTask<DateTimeOffset?>(DateTime.SpecifyKind(token.RedemptionDate.Value, DateTimeKind.Utc));
+			return new ValueTask<DateTimeOffset?>(new DateTimeOffset(DateTime.SpecifyKind(token.RedemptionDate.Value, DateTimeKind.Utc)));
 		}
 
 		/// <summary>

@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>3.0.7</Version>
+    <Version>3.0.10</Version>
     <Authors>Viktor Rosvall</Authors>
     <RepositoryUrl>https://github.com/vruss/OpenIddict.NHibernate</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -12,6 +12,9 @@
     <Description>NHibernate 5.* integration for OpenIddict</Description>
     <PackageTags>OpenIddict;NHibernate</PackageTags>
     <PackageId>Community.OpenIddict.NHibernate</PackageId>
+    <LangVersion>latest</LangVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,8 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NHibernate" Version="5.5.2" />
-    <PackageReference Include="OpenIddict.Core" Version="7.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.6" />
+    <PackageReference Include="NHibernate" Version="5.6.0" />
+    <PackageReference Include="OpenIddict.Core" Version="7.4.0" />
   </ItemGroup>
 
   <ItemGroup>

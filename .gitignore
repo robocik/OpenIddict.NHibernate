@@ -73,3 +73,4 @@ $RECYCLE.BIN/
 
 # Rider
 .idea
+/.vs/OpenIddict.NHibernate

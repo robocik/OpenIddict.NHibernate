@@ -20,7 +20,7 @@ namespace OpenIddict.NHibernate
 		{
 			this.Id(scope => scope.Id, map =>
 			{
-				map.Generator(Generators.Identity);
+				map.Generator(Generators.Assigned);
 			});
 
 			this.Version(scope => scope.ConcurrencyToken, map =>

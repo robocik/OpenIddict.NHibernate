@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>3.0.7</Version>
+    <Version>3.0.10</Version>
     <Authors>Viktor Rosvall</Authors>
     <RepositoryUrl>https://github.com/vruss/OpenIddict.NHibernate</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -12,6 +12,9 @@
     <Description>NHibernate 5.* integration models for OpenIddict</Description>
     <PackageTags>OpenIddict;NHibernate;Models</PackageTags>
     <PackageId>Community.OpenIddict.NHibernate.Models</PackageId>
+    <LangVersion>latest</LangVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -183,21 +183,30 @@ namespace OpenIddict.NHibernate
 
 			try
 			{
-				// Delete all the tokens associated with the application.
-				await session
-					.Query<TToken>()
-					.Fetch(token => token.Application)
-					.Fetch(token => token.Authorization)
-					.Where(token => token.Authorization == null) // Copied from https://github.com/openiddict/openiddict-core/blob/dev/src/OpenIddict.EntityFramework/Stores/OpenIddictEntityFrameworkApplicationStore.cs#L142-L142
-					.Where(token => token.Application != null && token.Application.Id!.Equals(application.Id))
-					.DeleteAsync(cancellationToken);
+				var applicationId = application.Id;
 
-				// Remove all the authorizations associated with the application and the tokens attached to these implicit or explicit authorizations.
-				await session
+				// Delete all tokens associated with the application. Using entity deletes avoids
+				// NHibernate's HQL bulk delete limitations with joined navigation properties.
+				var tokens = await session
+					.Query<TToken>()
+					.Where(token => token.Application != null && token.Application.Id!.Equals(applicationId))
+					.ToListAsync(cancellationToken);
+
+				foreach (var token in tokens)
+				{
+					await session.DeleteAsync(token, cancellationToken);
+				}
+
+				// Remove all authorizations associated with the application.
+				var authorizations = await session
 					.Query<TAuthorization>()
-					.Fetch(authorization => authorization.Application)
-					.Where(authorization => authorization.Application != null && authorization.Application.Id!.Equals(application.Id))
-					.DeleteAsync(cancellationToken);
+					.Where(authorization => authorization.Application != null && authorization.Application.Id!.Equals(applicationId))
+					.ToListAsync(cancellationToken);
+
+				foreach (var authorization in authorizations)
+				{
+					await session.DeleteAsync(authorization, cancellationToken);
+				}
 
 				await session.DeleteAsync(application, cancellationToken);
 				await transaction.CommitAsync(cancellationToken);
